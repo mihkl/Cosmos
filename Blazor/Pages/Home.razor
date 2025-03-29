@@ -1,0 +1,157 @@
+﻿@page "/"
+@inject HttpClient Http
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Shared
+
+<h3>Find Routes</h3>
+
+<div class="form-group">
+    <label>From Planet:</label>
+    <select class="form-control" @bind="fromPlanet">
+        @foreach (var planet in Enum.GetValues(typeof(Planet)))
+        {
+            <option value="@planet">@planet</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label>To Planet:</label>
+    <select class="form-control" @bind="toPlanet">
+        @foreach (var planet in Enum.GetValues(typeof(Planet)))
+        {
+            <option value="@planet">@planet</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Companies:</label>
+    <select class="form-control" multiple @bind="selectedCompanies">
+        @foreach (var company in Enum.GetValues(typeof(SpaceCompany)))
+        {
+            <option value="@company">@company</option>
+        }
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Sort By:</label>
+    <select class="form-control" @bind="sortBy">
+        <option value="price">Price</option>
+        <option value="distance">Distance</option>
+        <option value="time">Time</option>
+    </select>
+</div>
+
+<button class="btn btn-primary" @onclick="FindRoutes">Find Routes</button>
+
+@if (Routes != null)
+{
+    <h3>Routes:</h3>
+    <div class="row">
+        @foreach (var route in Routes)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card" @onclick="() => ToggleRouteDetails(route)">
+                    <div class="card-body">
+                        <h5 class="card-title">Route</h5>
+                        <p class="card-text">Total Price: @route.TotalPrice.ToString("0.00") €</p>
+                        <p class="card-text">Total Distance: @route.TotalDistance km</p>
+                        <p class="card-text">Companies: @string.Join(", ", route.Companies)</p>
+                        <p class="card-text">Total Time: @FormatTime(CalculateTotalRouteTime(route))</p>
+                        @if (expandedRoutes.Contains(route))
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var leg in route.Legs)
+                                {
+                                    <li class="list-group-item">
+                                        <p>From: @leg.RouteInfo.From.Name</p>
+                                        <p>To: @leg.RouteInfo.To.Name</p>
+                                        <p>Provider: @leg.Provider.Company.Name</p>
+                                        <p>Price: @leg.Provider.Price.ToString("0.00") €</p>
+                                        <p>Departure date: @leg.Provider.FlightStart</p>
+                                        <p>Arrival date: @leg.Provider.FlightEnd</p>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private Planet fromPlanet = Planet.Earth;
+    private Planet toPlanet = Planet.Mars;
+    private SpaceCompany[] selectedCompanies = Array.Empty<SpaceCompany>();
+    private List<RouteDto>? Routes;
+    private List<RouteDto> expandedRoutes = new List<RouteDto>();
+    private string sortBy = "price";
+
+    private async Task FindRoutes()
+    {
+        var queryParams = new Dictionary<string, string>
+        {
+            { "from", fromPlanet.ToString() },
+            { "to", toPlanet.ToString() }
+        };
+
+        if (selectedCompanies.Length > 0)
+        {
+            for (int i = 0; i < selectedCompanies.Length; i++)
+            {
+                queryParams.Add($"companies[{i}]", selectedCompanies[i].ToString());
+            }
+        }
+
+        var query = new FormUrlEncodedContent(queryParams);
+        var queryString = await query.ReadAsStringAsync();
+
+        var response = await Http.GetFromJsonAsync<List<RouteDto>>($"api/Travel/routes?{queryString}");
+
+        Routes = response;
+
+        if (Routes != null)
+        {
+            switch (sortBy)
+            {
+                case "price":
+                    Routes = Routes.OrderBy(r => r.TotalPrice).ToList();
+                    break;
+                case "distance":
+                    Routes = Routes.OrderBy(r => r.TotalDistance).ToList();
+                    break;
+                case "time":
+                    Routes = Routes.OrderBy(CalculateTotalRouteTime).ToList();
+                    break;
+            }
+        }
+        expandedRoutes.Clear();
+    }
+
+    private void ToggleRouteDetails(RouteDto route)
+    {
+        if (expandedRoutes.Contains(route))
+        {
+            expandedRoutes.Remove(route);
+        }
+        else
+        {
+            expandedRoutes.Add(route);
+        }
+    }
+
+    private string FormatTime(TimeSpan timeSpan)
+    {
+        return $"{(int)timeSpan.TotalDays}d {timeSpan.Hours}h {timeSpan.Minutes}m";
+    }
+
+    private TimeSpan CalculateTotalRouteTime(RouteDto route)
+    {
+        return TimeSpan.FromMilliseconds(route.Legs.Sum(leg => (leg.Provider.FlightEnd - leg.Provider.FlightStart).TotalMilliseconds));
+    }
+}
