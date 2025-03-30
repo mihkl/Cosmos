@@ -58,7 +58,7 @@ public class Location
 
 public class Provider
 {
-    
+
     [JsonProperty("id")]
     [Key]
     public required Guid Id { get; set; }
@@ -86,82 +86,29 @@ public class Company
     public required SpaceCompany Name { get; set; }
 }
 
-public enum SpaceCompany
+public class ReservationRequest
 {
-    [EnumMember(Value = "Space Voyager")]
-    SpaceVoyager,
-    [EnumMember(Value = "Explore Origin")]
-    ExploreOrigin,
-    [EnumMember(Value = "Space Piper")]
-    SpacePiper,
-    [EnumMember(Value = "Space Odyssey")]
-    SpaceOdyssey,
-    [EnumMember(Value = "SpaceX")]
-    SpaceX,
-    [EnumMember(Value = "Explore Dynamite")]
-    ExploreDynamite,
-    [EnumMember(Value = "Spacelux")]
-    Spacelux,
-    [EnumMember(Value = "Spacegenix")]
-    Spacegenix,
-    [EnumMember(Value = "Galaxy Express")]
-    GalaxyExpress,
-    [EnumMember(Value = "Travel Nova")]
-    TravelNova
-}
-
-public enum Planet
-{
-    Earth,
-    Mars,
-    Venus,
-    Jupiter,
-    Saturn,
-    Uranus,
-    Neptune,
-    Mercury
-}
-
-public class RouteDto
-{
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
     public required List<LegDto> Legs { get; set; }
-    public required double TotalPrice { get; set; }
-    public required long TotalDistance { get; set; }
-    public required List<string> Companies { get; set; }
+    public required double TotalQuotedPrice { get; set; }
+    public required List<string> TransportationCompanyNames { get; set; }
 }
 
-public class LegDto
+public class ReservationLeg
 {
+    [Key]
     public required Guid Id { get; set; }
-    public required RouteInfoDto RouteInfo { get; set; }
-    public required ProviderDto Provider { get; set; }
+    public required Provider Provider { get; set; }
+    public required Leg Leg { get; set; }
 }
-
-public class RouteInfoDto
+public class Reservation
 {
+    [Key]
     public required Guid Id { get; set; }
-    public required LocationDto From { get; set; }
-    public required LocationDto To { get; set; }
-    public required long Distance { get; set; }
-}
-
-public class LocationDto
-{
-    public required Guid Id { get; set; }
-    public required string Name { get; set; }
-}
-
-public class ProviderDto
-{
-    public required Guid Id { get; set; }
-    public required CompanyDto Company { get; set; }
-    public required double Price { get; set; }
-    public required DateTime FlightStart { get; set; }
-    public required DateTime FlightEnd { get; set; }
-}
-
-public class CompanyDto
-{
-    public required Guid Id { get; set; }
-    public required string Name { get; set; }
+    public required string FirstName { get; set; }
+    public required string LastName { get; set; }
+    public required List<ReservationLeg> ReservationLegs { get; set; }
+    public required double TotalQuotedPrice { get; set; }
+    public required List<string> TransportationCompanyNames { get; set; }
 }

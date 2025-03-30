@@ -20,7 +20,10 @@ builder.Services
     .AddDbContext<DataContext>(options =>
         options.UseSqlite("Data Source=cosmos.db")
                .EnableSensitiveDataLogging())
-        .AddScoped<PriceListRepo>();
+        .AddScoped<PriceListRepo>()
+        .AddScoped<LegsRepo>()
+        .AddScoped<ProviderRepo>()
+        .AddScoped<ReservationRepo>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

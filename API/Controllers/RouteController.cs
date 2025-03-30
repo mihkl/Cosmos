@@ -7,11 +7,10 @@ using Shared;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
     public class TravelController(PriceListRepo priceListRepo): ControllerBase
     {
         private readonly PriceListRepo _priceListRepo = priceListRepo;
-        [HttpGet("routes")]
+        [HttpGet("api/routes")]
         public async Task<IActionResult> GetRoutes([FromQuery] Planet from, [FromQuery] Planet to, [FromQuery] SpaceCompany[] companies)
         {
 

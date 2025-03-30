@@ -11,7 +11,7 @@ public static class Mappers
             Legs = route.Select(legProvider => legProvider.ToDto()).ToList(),
             TotalPrice = route.Sum(legProvider => legProvider.Provider.Price),
             TotalDistance = route.Sum(legProvider => legProvider.Leg.RouteInfo.Distance),
-            Companies = route.Select(legProvider => legProvider.Provider.Company.Name.ToString()).Distinct().ToList()
+            Companies = [.. route.Select(legProvider => legProvider.Provider.Company.Name.ToString()).Distinct()]
         };
     }
 
@@ -63,6 +63,29 @@ public static class Mappers
         {
             Id = company.Id,
             Name = company.Name.ToString()
+        };
+    }
+
+    public static ReservationDto ToDto(this Reservation reservation)
+    {
+        return new ReservationDto
+        {
+            Id = reservation.Id,
+            FirstName = reservation.FirstName,
+            LastName = reservation.LastName,
+            Legs = [.. reservation.ReservationLegs.Select(leg => leg.ToDto())],
+            TotalQuotedPrice = reservation.TotalQuotedPrice,
+            TransportationCompanyNames = [.. reservation.TransportationCompanyNames]
+        };
+    }
+
+    public static ReservationLegDto ToDto(this ReservationLeg reservationLeg)
+    {
+        return new ReservationLegDto
+        {
+            Id = reservationLeg.Id,
+            RouteInfo = reservationLeg.Leg.RouteInfo.ToDto(),
+            Provider = reservationLeg.Provider.ToDto()
         };
     }
 }

@@ -44,7 +44,6 @@ public static class RouteFinder
                 }
             }
         }
-
         return results;
     }
 }

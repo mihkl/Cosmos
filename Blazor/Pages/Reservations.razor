@@ -1,0 +1,103 @@
+﻿@page "/reservations"
+@inject HttpClient Http
+@using Shared
+
+<h1>Reservations</h1>
+
+@if (reservations == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (reservations.Count == 0)
+{
+    <p><em>No reservations found.</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Reservation ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Total Price</th>
+                <th>Transportation Companies</th>
+                <th>Legs</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reservation in reservations)
+            {
+                <tr>
+                    <td>@reservation.Id</td>
+                    <td>@reservation.FirstName</td>
+                    <td>@reservation.LastName</td>
+                    <td>@reservation.TotalQuotedPrice</td>
+                    <td>@string.Join(", ", reservation.TransportationCompanyNames)</td>
+                    <td>
+                        <button @onclick="() => ToggleLegs(reservation.Id)">
+                            @(showLegs[reservation.Id] ? "Hide Legs" : "Show Legs")
+                        </button>
+                        @if (showLegs.ContainsKey(reservation.Id) && showLegs[reservation.Id])
+                        {
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Leg ID</th>
+                                        <th>From</th>
+                                        <th>To</th>
+                                        <th>Distance</th>
+                                        <th>Provider Company</th>
+                                        <th>Provider Price</th>
+                                        <th>Flight Start</th>
+                                        <th>Flight End</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var leg in reservation.Legs)
+                                    {
+                                        <tr>
+                                            <td>@leg.Id</td>
+                                            <td>@leg.RouteInfo.From.Name</td>
+                                            <td>@leg.RouteInfo.To.Name</td>
+                                            <td>@leg.RouteInfo.Distance</td>
+                                            <td>@leg.Provider.Company.Name</td>
+                                            <td>@leg.Provider.Price</td>
+                                            <td>@leg.Provider.FlightStart</td>
+                                            <td>@leg.Provider.FlightEnd</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ReservationDto> reservations = [];
+    private Dictionary<Guid, bool> showLegs = new Dictionary<Guid, bool>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        reservations = await Http.GetFromJsonAsync<List<ReservationDto>>("api/reservations") ?? [];
+        if(reservations is not null)
+        {
+            foreach(var reservation in reservations)
+            {
+                showLegs[reservation.Id] = false;
+            }
+        }
+    }
+
+    private void ToggleLegs(Guid reservationId)
+    {
+        if (showLegs.ContainsKey(reservationId))
+        {
+            showLegs[reservationId] = !showLegs[reservationId];
+        }
+    }
+}
