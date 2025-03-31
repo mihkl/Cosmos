@@ -1,0 +1,83 @@
+.reservation-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.reservation-details {
+    margin-bottom: 15px;
+}
+
+.reservation-price {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.reservation-legs {
+    margin-top: 15px;
+    width: 100%;
+}
+
+.leg-list {
+    list-style: none;
+    padding: 0;
+}
+
+.leg-list li {
+    margin-bottom: 10px;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.leg-details {
+    font-size: 0.9em;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.leg-details p {
+    flex: 1 0 20%;
+    margin: 5px;
+}
+
+.leg-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+    width: 100%;
+}
+
+.leg-provider {
+    color: #007bff;
+}
+
+.toggle-legs-button {
+    background-color: #f0f0f0;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.toggle-legs-button:hover {
+    background-color: #e0e0e0;
+}
+
+.flight-summary {
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+.arrow-icon {
+    margin: 0 5px;
+    font-size: 1em;
+}

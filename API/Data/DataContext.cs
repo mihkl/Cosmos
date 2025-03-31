@@ -26,5 +26,56 @@ public class DataContext(DbContextOptions options) : DbContext(options)
             .HasOne(p => p.Company)
             .WithMany()
             .HasForeignKey("CompanyId");
+
+         modelBuilder.Entity<Leg>()
+            .HasOne(l => l.RouteInfo)
+            .WithOne()
+            .HasForeignKey<Leg>("RouteInfoId");
+
+        modelBuilder.Entity<PriceList>()
+            .HasMany(p => p.Legs)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Leg>()
+            .HasMany(l => l.Providers)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Leg>()
+            .HasOne(l => l.RouteInfo)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RouteInfo>()
+            .HasOne(r => r.From)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RouteInfo>()
+            .HasOne(r => r.To)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<PriceList>()
+            .HasMany(p => p.Reservations)
+            .WithOne()
+            .HasForeignKey("PriceListId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Reservation>()
+            .HasMany(r => r.ReservationLegs)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReservationLeg>()
+            .HasOne(rl => rl.Leg)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReservationLeg>()
+            .HasOne(rl => rl.Provider)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

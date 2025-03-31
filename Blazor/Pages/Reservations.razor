@@ -2,6 +2,7 @@
 @inject HttpClient Http
 @using Shared
 
+
 <h1>Reservations</h1>
 
 @if (reservations == null)
@@ -14,67 +15,52 @@ else if (reservations.Count == 0)
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Reservation ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Total Price</th>
-                <th>Transportation Companies</th>
-                <th>Legs</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var reservation in reservations)
+    @foreach (var reservation in reservations.OrderByDescending(r => r.CreatedAt))
+    {
+        <div class="reservation-card">
+            <div class="reservation-details">
+                <p><strong>First Name:</strong> @reservation.FirstName</p>
+                <p><strong>Last Name:</strong> @reservation.LastName</p>
+                <p class="reservation-price">Total Price: @reservation.TotalQuotedPrice.ToString("0.00") €</p>
+                <p><strong>Transportation Companies:</strong> @string.Join(", ", reservation.TransportationCompanyNames)</p>
+                @if (reservation.Legs.Any())
+                {
+                    <p class="flight-summary">
+                        <strong>@reservation.Legs.First().RouteInfo.From.Name </strong>(@reservation.Legs.First().Provider.FlightStart)
+                        <span class="arrow-icon">→</span>
+                        <strong>@reservation.Legs.Last().RouteInfo.To.Name </strong>(@reservation.Legs.Last().Provider.FlightEnd)
+                    </p>
+                }
+            </div>
+
+            <button class="toggle-legs-button" @onclick="() => ToggleLegs(reservation.Id)">
+                @(showLegs[reservation.Id] ? "Hide Details" : "Show Details")
+            </button>
+
+            @if (showLegs.ContainsKey(reservation.Id) && showLegs[reservation.Id])
             {
-                <tr>
-                    <td>@reservation.Id</td>
-                    <td>@reservation.FirstName</td>
-                    <td>@reservation.LastName</td>
-                    <td>@reservation.TotalQuotedPrice</td>
-                    <td>@string.Join(", ", reservation.TransportationCompanyNames)</td>
-                    <td>
-                        <button @onclick="() => ToggleLegs(reservation.Id)">
-                            @(showLegs[reservation.Id] ? "Hide Legs" : "Show Legs")
-                        </button>
-                        @if (showLegs.ContainsKey(reservation.Id) && showLegs[reservation.Id])
+                <div class="reservation-legs">
+                    <ul class="leg-list">
+                        @foreach (var leg in reservation.Legs)
                         {
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Leg ID</th>
-                                        <th>From</th>
-                                        <th>To</th>
-                                        <th>Distance</th>
-                                        <th>Provider Company</th>
-                                        <th>Provider Price</th>
-                                        <th>Flight Start</th>
-                                        <th>Flight End</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var leg in reservation.Legs)
-                                    {
-                                        <tr>
-                                            <td>@leg.Id</td>
-                                            <td>@leg.RouteInfo.From.Name</td>
-                                            <td>@leg.RouteInfo.To.Name</td>
-                                            <td>@leg.RouteInfo.Distance</td>
-                                            <td>@leg.Provider.Company.Name</td>
-                                            <td>@leg.Provider.Price</td>
-                                            <td>@leg.Provider.FlightStart</td>
-                                            <td>@leg.Provider.FlightEnd</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                            <li>
+                                <div class="leg-details">
+                                    <p><strong>From:</strong> @leg.RouteInfo.From.Name</p>
+                                    <p><strong>To:</strong> @leg.RouteInfo.To.Name</p>
+                                    <p><strong>Distance:</strong> @leg.RouteInfo.Distance km</p>
+                                    <p><strong>Provider:</strong> <span class="leg-provider">@leg.Provider.Company.Name</span></p>
+                                    <p><strong>Price:</strong> @leg.Provider.Price €</p>
+                                    <p><strong>Flight Start:</strong> @leg.Provider.FlightStart</p>
+                                    <p><strong>Flight End:</strong> @leg.Provider.FlightEnd</p>
+                                    <p><strong>Time:</strong> @FormatTime(leg.Provider.FlightEnd, leg.Provider.FlightStart)</p>
+                                </div>
+                            </li>
                         }
-                    </td>
-                </tr>
+                    </ul>
+                </div>
             }
-        </tbody>
-    </table>
+        </div>
+    }
 }
 
 @code {
@@ -84,13 +70,19 @@ else
     protected override async Task OnInitializedAsync()
     {
         reservations = await Http.GetFromJsonAsync<List<ReservationDto>>("api/reservations") ?? [];
-        if(reservations is not null)
+        if (reservations is not null)
         {
-            foreach(var reservation in reservations)
+            foreach (var reservation in reservations)
             {
                 showLegs[reservation.Id] = false;
             }
         }
+    }
+
+    private string FormatTime(DateTime end, DateTime start)
+    {
+        var timeSpan = end - start;
+        return $"{timeSpan.Days}d {timeSpan.Hours}h {timeSpan.Minutes}m";
     }
 
     private void ToggleLegs(Guid reservationId)

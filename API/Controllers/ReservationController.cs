@@ -8,7 +8,7 @@ using Shared;
 namespace API.Controllers;
 
 [ApiController]
-public class ReservationController(ReservationRepo reservationRepo, LegsRepo legsRepo, ProviderRepo providerRepo) : ControllerBase
+public class ReservationController(ReservationRepo reservationRepo, LegsRepo legsRepo, ProviderRepo providerRepo, PriceListRepo priceListRepo) : ControllerBase
 {
     [HttpPost("api/reservations")]
     public async Task<IActionResult> CreateReservation([FromBody] ReservationRequest request)
@@ -37,6 +37,7 @@ public class ReservationController(ReservationRepo reservationRepo, LegsRepo leg
         var reservation = new Reservation
         {
             Id = Guid.NewGuid(),
+            PriceListId = priceListRepo.GetActivePriceListAsync().Result.Id,
             FirstName = request.FirstName,
             LastName = request.LastName,
             ReservationLegs = [.. legs.Select(l => new ReservationLeg
@@ -46,7 +47,8 @@ public class ReservationController(ReservationRepo reservationRepo, LegsRepo leg
                     Provider = l.Provider,
                 })],
             TotalQuotedPrice = request.TotalQuotedPrice,
-            TransportationCompanyNames = request.TransportationCompanyNames
+            TransportationCompanyNames = request.TransportationCompanyNames,
+            CreatedAt = DateTime.Now
         };
 
         await reservationRepo.AddAsync(reservation);

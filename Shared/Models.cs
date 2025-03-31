@@ -15,6 +15,7 @@ public class PriceList
 
     [JsonProperty("legs")]
     public required List<Leg> Legs { get; set; }
+    public List<Reservation> Reservations { get; set; } = [];
 }
 
 public class Leg
@@ -106,9 +107,11 @@ public class Reservation
 {
     [Key]
     public required Guid Id { get; set; }
+    public required Guid PriceListId { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public required List<ReservationLeg> ReservationLegs { get; set; }
     public required double TotalQuotedPrice { get; set; }
     public required List<string> TransportationCompanyNames { get; set; }
+    public required DateTime CreatedAt { get; set; }
 }

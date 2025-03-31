@@ -18,10 +18,7 @@ namespace API.Controllers
             var legs = priceList.Legs.ToList();
             var routes = RouteFinder.FindRoutes(from, to, legs, 5);
 
-            if (companies != null && companies.Length > 0)
-            {
-                routes = [.. routes.Where(route => route.All(legProvider => companies.Contains(legProvider.Provider.Company.Name)))];
-            }
+            routes = [.. routes.Where(route => route.All(legProvider => companies.Contains(legProvider.Provider.Company.Name)))];
 
             var routeDtos = routes.Select(route => route.ToDto()).ToList();
             return Ok(routeDtos);

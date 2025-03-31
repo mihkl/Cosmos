@@ -73,9 +73,10 @@ public static class Mappers
             Id = reservation.Id,
             FirstName = reservation.FirstName,
             LastName = reservation.LastName,
-            Legs = [.. reservation.ReservationLegs.Select(leg => leg.ToDto())],
+            Legs = [.. reservation.ReservationLegs.Select(leg => leg.ToDto()).OrderBy(l => l.Provider.FlightStart)],
             TotalQuotedPrice = reservation.TotalQuotedPrice,
-            TransportationCompanyNames = [.. reservation.TransportationCompanyNames]
+            TransportationCompanyNames = [.. reservation.TransportationCompanyNames],
+            CreatedAt = reservation.CreatedAt
         };
     }
 

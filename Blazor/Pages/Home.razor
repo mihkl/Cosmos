@@ -1,131 +1,195 @@
 ﻿@page "/"
 @inject HttpClient Http
+@inject NavigationManager NavigationManager
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using Shared
 
-<h3>Find Routes</h3>
-
-<div class="form-group">
-    <label>From Planet:</label>
-    <select class="form-control" @bind="fromPlanet">
-        @foreach (var planet in Enum.GetValues(typeof(Planet)))
-        {
-            <option value="@planet">@planet</option>
-        }
-    </select>
-</div>
-
-<div class="form-group">
-    <label>To Planet:</label>
-    <select class="form-control" @bind="toPlanet">
-        @foreach (var planet in Enum.GetValues(typeof(Planet)))
-        {
-            <option value="@planet">@planet</option>
-        }
-    </select>
-</div>
-
-<div class="form-group">
-    <label>Companies:</label>
-    <select class="form-control" multiple @bind="selectedCompanies">
-        @foreach (var company in Enum.GetValues(typeof(SpaceCompany)))
-        {
-            <option value="@company">@company</option>
-        }
-    </select>
-</div>
-
-<div class="form-group">
-    <label>Sort By:</label>
-    <select class="form-control" @bind="sortBy">
-        <option value="price">Price</option>
-        <option value="distance">Distance</option>
-        <option value="time">Time</option>
-    </select>
-</div>
-
-<button class="btn btn-primary" @onclick="FindRoutes">Find Routes</button>
-
-@if (Routes != null)
-{
-    <h3>Routes:</h3>
-    <div class="row">
-        @foreach (var route in Routes)
-        {
-            <div class="col-md-4 mb-3">
-                <div class="card" @onclick="() => ToggleRouteDetails(route)">
-                    <div class="card-body">
-                        <h5 class="card-title">Route</h5>
-                        <p class="card-text">Total Price: @route.TotalPrice.ToString("0.00") €</p>
-                        <p class="card-text">Total Distance: @route.TotalDistance km</p>
-                        <p class="card-text">Companies: @string.Join(", ", route.Companies)</p>
-                        <p class="card-text">Total Time: @FormatTime(CalculateTotalRouteTime(route))</p>
-                        @if (expandedRoutes.Contains(route))
+<div @onclick="HandleClickOutside">
+    @if (!firstSearchSubmitted)
+    {
+        <div class="center-form">
+            <div class="input-row">
+                <div class="form-group">
+                    <select class="form-control" @bind="fromPlanet">
+                        @foreach (var planet in Enum.GetValues(typeof(Planet)))
                         {
-                            <ul class="list-group list-group-flush">
+                            <option value="@planet">@planet</option>
+                        }
+                    </select>
+                </div>
+
+                <span class="arrow-icon">→</span>
+
+                <div class="form-group">
+                    <select class="form-control" @bind="toPlanet">
+                        @foreach (var planet in Enum.GetValues(typeof(Planet)))
+                        {
+                            <option value="@planet">@planet</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group company-dropdown" @onclick:stopPropagation>
+                    <div class="company-dropdown-button" @onclick="ToggleCompanyDropdown">
+                        <span>@GetSelectedCompaniesText()</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="company-dropdown-list @(showCompanyDropdown ? "show" : "")">
+                        @foreach (SpaceCompany company in Enum.GetValues(typeof(SpaceCompany)))
+                        {
+                            <label>
+                                <input type="checkbox" value="@company" @onchange="e => ToggleCompanySelection(company, (e.Value as bool?) ?? false)" checked="@selectedCompanies.Contains(company)" />
+                                @company
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" @onclick="FindRoutes">Find Routes</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="input-row">
+            <div class="form-group">
+                <select class="form-control" @bind="fromPlanet">
+                    @foreach (var planet in Enum.GetValues(typeof(Planet)))
+                    {
+                        <option value="@planet">@planet</option>
+                    }
+                </select>
+            </div>
+
+            <span class="arrow-icon">→</span>
+
+            <div class="form-group">
+                <select class="form-control" @bind="toPlanet">
+                    @foreach (var planet in Enum.GetValues(typeof(Planet)))
+                    {
+                        <option value="@planet">@planet</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group company-dropdown" @onclick:stopPropagation>
+                <div class="company-dropdown-button" @onclick="ToggleCompanyDropdown">
+                    <span>@GetSelectedCompaniesText()</span>
+                    <span>▼</span>
+                </div>
+                <div class="company-dropdown-list @(showCompanyDropdown ? "show" : "")">
+                    @foreach (SpaceCompany company in Enum.GetValues(typeof(SpaceCompany)))
+                    {
+                        <label>
+                            <input type="checkbox" value="@company" @onchange="e => ToggleCompanySelection(company, (e.Value as bool?) ?? false)" checked="@selectedCompanies.Contains(company)" />
+                            @company
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <button class="btn btn-primary" @onclick="FindRoutes">Find Routes</button>
+        </div>
+
+        @if (Routes.Any())
+        {
+            <div class="form-group">
+                <label>Sort By:</label>
+                <select class="form-control" @onchange="(e) => ApplyFilters(((ChangeEventArgs)e).Value?.ToString() ?? string.Empty)">
+                    <option value="price">Price</option>
+                    <option value="distance">Distance</option>
+                    <option value="time">Time</option>
+                </select>
+            </div>
+
+            <div>
+                @foreach (var route in Routes)
+                {
+                    <div class="route-card">
+                        <div class="route-details">
+                            <ul class="flight-list">
                                 @foreach (var leg in route.Legs)
                                 {
-                                    <li class="list-group-item">
-                                        <p>From: @leg.RouteInfo.From.Name</p>
-                                        <p>To: @leg.RouteInfo.To.Name</p>
-                                        <p>Provider: @leg.Provider.Company.Name</p>
-                                        <p>Price: @leg.Provider.Price.ToString("0.00") €</p>
-                                        <p>Departure date: @leg.Provider.FlightStart</p>
-                                        <p>Arrival date: @leg.Provider.FlightEnd</p>
+                                    <li>
+                                        <div class="flight-time">
+                                            <span class="company-name">@leg.Provider.Company.Name</span> @leg.Provider.FlightStart.ToString("dd/MM/yyyy HH:mm") - @leg.Provider.FlightEnd.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                        <div class="flight-planets">
+                                            @leg.RouteInfo.From.Name - @leg.RouteInfo.To.Name
+                                        </div>
                                     </li>
                                 }
                             </ul>
-                        }
-                        <button class="btn btn-primary mt-2" @onclick="() => OpenReservationPopup(route)">Make Reservation</button>
+                            <div class="company-list">
+                                Companies: @string.Join(", ", route.Companies)
+                            </div>
+                        </div>
+                        <div class="route-price-reserve">
+                            <div class="route-price">@route.TotalPrice.ToString("0.00") €</div>
+                            <div class="flight-duration">
+                                Time: @FormatTime(CalculateTotalRouteTime(route))
+                            </div>
+                            <div class="total-distance">
+                                Distance: @route.TotalDistance km
+                            </div>
+                            <button class="route-reserve-button" @onclick="() => OpenReservationPopup(route)">Reserve</button>
+                        </div>
                     </div>
-                </div>
+                }
             </div>
         }
-    </div>
-}
+        else
+        {
+            <div class="alert alert-info" role="alert">
+                No routes found. Please adjust your search criteria.
+            </div>
+        }
+    }
 
-@if (showReservationPopup)
-{
-    <div class="modal" tabindex="-1" style="display:block;" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Enter Reservation Details</h5>
-                    <button type="button" class="close" @onclick="CloseReservationPopup">
-                        <span>&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>First Name:</label>
-                        <input type="text" class="form-control" @bind="firstName" />
+    @if (showReservationPopup)
+    {
+        <div class="modal" tabindex="-1" style="display:block;" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Enter Reservation Details</h5>
+                        <button type="button" class="close" @onclick="CloseReservationPopup">
+                            <span>&times;</span>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>Last Name:</label>
-                        <input type="text" class="form-control" @bind="lastName" />
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>First Name:</label>
+                            <input type="text" class="form-control" @bind="firstName" />
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name:</label>
+                            <input type="text" class="form-control" @bind="lastName" />
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseReservationPopup">Cancel</button>
-                    <button type="button" class="btn btn-primary" @onclick="() => MakeReservation(selectedRoute)">Submit Reservation</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseReservationPopup">Cancel</button>
+                        <button type="button" class="btn btn-primary" @onclick="() => MakeReservation(selectedRoute)">Submit Reservation</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-}
+    }
+</div>
 
 @code {
     private Planet fromPlanet = Planet.Earth;
     private Planet toPlanet = Planet.Mars;
-    private SpaceCompany[] selectedCompanies = Array.Empty<SpaceCompany>();
-    private List<RouteDto>? Routes;
-    private List<RouteDto> expandedRoutes = new List<RouteDto>();
+    private List<SpaceCompany> selectedCompanies = Enum.GetValues(typeof(SpaceCompany)).Cast<SpaceCompany>().ToList();
+    private List<RouteDto> Routes = [];
     private string sortBy = "price";
     private string firstName = string.Empty;
     private string lastName = string.Empty;
     private bool showReservationPopup = false;
-    private RouteDto selectedRoute;
+    private RouteDto? selectedRoute;
+    private bool showCompanyDropdown = false;
+    private bool firstSearchSubmitted = false;
 
     private void OpenReservationPopup(RouteDto route)
     {
@@ -133,11 +197,8 @@
         showReservationPopup = true;
     }
 
-    private void CloseReservationPopup()
-    {
-        showReservationPopup = false;
-    }
-
+    private void CloseReservationPopup() => showReservationPopup = false;
+    
     private async Task MakeReservation(RouteDto route)
     {
         var reservationRequest = new ReservationRequest
@@ -154,22 +215,13 @@
         if (response.IsSuccessStatusCode)
         {
             var reservationResponse = await response.Content.ReadFromJsonAsync<ReservationDto>();
-            if (reservationResponse != null)
+            if (reservationResponse is not null)
             {
-                Console.WriteLine($"Reservation successful: {reservationResponse.Id}");
+                NavigationManager.NavigateTo("/reservations");
             }
-            else
-            {
-                Console.WriteLine("Error in reservation response.");
-            }
-        }
-        else
-        {
-            Console.WriteLine("Error making reservation.");
         }
         CloseReservationPopup();
     }
-
     private async Task FindRoutes()
     {
         var queryParams = new Dictionary<string, string>
@@ -178,9 +230,9 @@
             { "to", toPlanet.ToString() }
         };
 
-        if (selectedCompanies.Length > 0)
+        if (selectedCompanies.Any())
         {
-            for (int i = 0; i < selectedCompanies.Length; i++)
+            for (int i = 0; i < selectedCompanies.Count; i++)
             {
                 queryParams.Add($"companies[{i}]", selectedCompanies[i].ToString());
             }
@@ -191,9 +243,14 @@
 
         var response = await Http.GetFromJsonAsync<List<RouteDto>>($"api/routes?{queryString}");
 
-        Routes = response;
+        Routes = response ?? [];
+        ApplyFilters(sortBy);
+        firstSearchSubmitted = true;
+    }
 
-        if (Routes != null)
+    private void ApplyFilters(string sortBy = "price")
+    {
+        if (Routes is not null)
         {
             switch (sortBy)
             {
@@ -208,28 +265,32 @@
                     break;
             }
         }
-        expandedRoutes.Clear();
     }
 
-    private void ToggleRouteDetails(RouteDto route)
+    private string FormatTime(TimeSpan timeSpan) => $"{(int)timeSpan.TotalDays}d {timeSpan.Hours}h {timeSpan.Minutes}m";
+
+    private TimeSpan CalculateTotalRouteTime(RouteDto route) => 
+        TimeSpan.FromMilliseconds(route.Legs.Last().Provider.FlightEnd.Subtract(route.Legs.First().Provider.FlightStart).TotalMilliseconds);
+
+    private void ToggleCompanySelection(SpaceCompany company, bool isSelected)
     {
-        if (expandedRoutes.Contains(route))
+        if (isSelected)
         {
-            expandedRoutes.Remove(route);
+            if (!selectedCompanies.Contains(company))
+            {
+                selectedCompanies.Add(company);
+            }
         }
         else
         {
-            expandedRoutes.Add(route);
+            selectedCompanies.Remove(company);
         }
     }
 
-    private string FormatTime(TimeSpan timeSpan)
-    {
-        return $"{(int)timeSpan.TotalDays}d {timeSpan.Hours}h {timeSpan.Minutes}m";
-    }
+    private string GetSelectedCompaniesText() => 
+        selectedCompanies.Count == 0 ? "Select Providers" : $"{selectedCompanies.Count} providers selected";
 
-    private TimeSpan CalculateTotalRouteTime(RouteDto route)
-    {
-        return TimeSpan.FromMilliseconds(route.Legs.Sum(leg => (leg.Provider.FlightEnd - leg.Provider.FlightStart).TotalMilliseconds));
-    }
+    private void ToggleCompanyDropdown() => showCompanyDropdown = !showCompanyDropdown;
+
+    private void HandleClickOutside(MouseEventArgs e) => showCompanyDropdown = false;
 }

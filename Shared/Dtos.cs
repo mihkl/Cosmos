@@ -52,6 +52,7 @@ public class ReservationDto
     public required List<ReservationLegDto> Legs { get; set; }
     public required double TotalQuotedPrice { get; set; }
     public required List<string> TransportationCompanyNames { get; set; }
+    public required DateTime CreatedAt { get; set; }
 }
 
 public class ReservationLegDto

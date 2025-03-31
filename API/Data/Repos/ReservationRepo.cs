@@ -31,6 +31,7 @@ public class ReservationRepo(DataContext dataContext)
                 .ThenInclude(l => l.RouteInfo)
                     .ThenInclude(r => r.To)
             .ToListAsync();
+
         return reservations ?? [];
     }
 }
