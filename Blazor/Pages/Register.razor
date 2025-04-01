@@ -1,0 +1,67 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<div class="register-container">
+    <div class="register-card">
+        <EditForm Model="newUser" OnValidSubmit="HandleRegistration">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <InputText id="email" @bind-Value="newUser.Email" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <InputText id="password" @bind-Value="newUser.Password" type="password" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary register-button">Register</button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger error-message">@errorMessage</div>
+        }
+
+        <div class="login-link">
+            <p>Already have an account? <a href="/login">Go to Login</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel newUser = new RegisterModel();
+    private string? errorMessage;
+
+    private async Task HandleRegistration()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("register", newUser);
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                errorMessage = "Registration failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+    public class RegisterModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+}

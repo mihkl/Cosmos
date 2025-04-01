@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using API.BackgroundJobs;
 using API.Data;
 using API.Data.Repos;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -70,6 +71,22 @@ builder.Services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
         .AllowCredentials();
 }));
 
+builder.Services.AddAuthorization();
+
+builder.Services.AddIdentityApiEndpoints<User>()
+    .AddEntityFrameworkStores<DataContext>();
+
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedEmail = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 1;
+});
+
 
 var app = builder.Build();
 
@@ -96,6 +113,7 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseHttpsRedirection();
+app.MapIdentityApi<User>();
 
 app.UseCors("MyPolicy");
 app.UseAuthorization();

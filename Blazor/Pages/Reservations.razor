@@ -1,7 +1,11 @@
 ﻿@page "/reservations"
 @inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILocalStorageService LocalStorage
+@using Blazored.LocalStorage
 @using Shared
-
+@using Microsoft.AspNetCore.Authorization
+@using System.Net.Http.Headers
 
 <h1>Reservations</h1>
 
@@ -69,13 +73,30 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        reservations = await Http.GetFromJsonAsync<List<ReservationDto>>("api/reservations") ?? [];
-        if (reservations is not null)
+        var accessToken = await LocalStorage.GetItemAsync<string>("accessToken");
+
+        if (string.IsNullOrEmpty(accessToken))
         {
-            foreach (var reservation in reservations)
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        try
+        {
+            reservations = await Http.GetFromJsonAsync<List<ReservationDto>>("api/reservations") ?? [];
+            if (reservations is not null)
             {
-                showLegs[reservation.Id] = false;
+                foreach (var reservation in reservations)
+                {
+                    showLegs[reservation.Id] = false;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Navigation.NavigateTo("/login");
         }
     }
 

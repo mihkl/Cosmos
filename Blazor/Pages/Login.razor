@@ -1,0 +1,82 @@
+@page "/login"
+@using Blazored.LocalStorage
+@using System.ComponentModel.DataAnnotations
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILocalStorageService LocalStorage
+
+<div class="login-container">
+    <div class="login-card">
+
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <InputText id="email" @bind-Value="loginModel.Email" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <InputText id="password" @bind-Value="loginModel.Password" type="password" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary login-button">Login</button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger error-message">@errorMessage</div>
+        }
+
+        <div class="register-link">
+            <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("login", loginModel);
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                if (responseContent != null)
+                {
+                    await LocalStorage.SetItemAsync("accessToken", responseContent.AccessToken);
+                    Navigation.NavigateTo("/");
+                }
+            }
+            else
+            {
+                errorMessage = "Invalid login attempt.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class LoginResponse
+    {
+        public string TokenType { get; set; } = string.Empty;
+        public string AccessToken { get; set; } = string.Empty;
+        public int ExpiresIn { get; set; }
+        public string RefreshToken { get; set; } = string.Empty;
+    }
+}

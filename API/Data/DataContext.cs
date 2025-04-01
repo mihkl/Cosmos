@@ -1,9 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Shared;
 
 namespace API.Data;
 
-public class DataContext(DbContextOptions options) : DbContext(options)
+public class User : IdentityUser
+{
+    public List<Reservation> Reservations { get; set; } = [];
+}
+
+public class DataContext(DbContextOptions options) : IdentityDbContext(options)
 {
     public required DbSet<PriceList> PriceList { get; set; }
     public required DbSet<Leg> Legs { get; set; }
@@ -13,9 +20,15 @@ public class DataContext(DbContextOptions options) : DbContext(options)
     public required DbSet<Company> Companies { get; set; }
     public required DbSet<Reservation> Reservations { get; set; }
     public required DbSet<ReservationLeg> ReservationLegs { get; set; }
+    public new required DbSet<User> Users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Reservations)
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Leg>()
             .HasMany(l => l.Providers)

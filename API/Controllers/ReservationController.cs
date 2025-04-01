@@ -2,29 +2,40 @@ using API.Data;
 using API.Data.Repos;
 using API.Mappers;
 using API.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 
 namespace API.Controllers;
 
+[Authorize]
 [ApiController]
-public class ReservationController(ReservationRepo reservationRepo, LegsRepo legsRepo, ProviderRepo providerRepo, PriceListRepo priceListRepo) : ControllerBase
+public class ReservationController(ReservationRepo reservationRepo, LegsRepo legsRepo, ProviderRepo providerRepo,
+    PriceListRepo priceListRepo, UserManager<User> userManager) : ControllerBase
 {
+    private readonly ReservationRepo _reservationRepo = reservationRepo;
+    private readonly LegsRepo _legsRepo = legsRepo;
+    private readonly ProviderRepo _providerRepo = providerRepo;
+    private readonly PriceListRepo _priceListRepo = priceListRepo;
+    private readonly UserManager<User> _userManager = userManager;
     [HttpPost("api/reservations")]
     public async Task<IActionResult> CreateReservation([FromBody] ReservationRequest request)
     {
+        var userId = _userManager.GetUserId(User);
+
         List<(Leg Leg, Provider Provider)> legs = [];
 
         foreach (var leg in request.Legs)
         {
-            var legEntity = await legsRepo.GetLegByIdAsync(leg.Id);
+            var legEntity = await _legsRepo.GetLegByIdAsync(leg.Id);
 
             if (legEntity is null)
             {
                 return NotFound($"Leg with ID {leg.Id} not found.");
             }
 
-            var provider = await providerRepo.GetProviderByIdAsync(leg.Provider.Id);
+            var provider = await _providerRepo.GetProviderByIdAsync(leg.Provider.Id);
 
             if (provider is null)
             {
@@ -37,7 +48,7 @@ public class ReservationController(ReservationRepo reservationRepo, LegsRepo leg
         var reservation = new Reservation
         {
             Id = Guid.NewGuid(),
-            PriceListId = priceListRepo.GetActivePriceListAsync().Result.Id,
+            PriceListId = _priceListRepo.GetActivePriceListAsync().Result.Id,
             FirstName = request.FirstName,
             LastName = request.LastName,
             ReservationLegs = [.. legs.Select(l => new ReservationLeg
@@ -51,7 +62,7 @@ public class ReservationController(ReservationRepo reservationRepo, LegsRepo leg
             CreatedAt = DateTime.UtcNow,
         };
 
-        await reservationRepo.AddAsync(reservation);
+        await _reservationRepo.AddAsync(reservation, userId);
 
         return CreatedAtAction(nameof(CreateReservation), new { id = reservation.Id }, reservation.ToDto());
     }
@@ -60,7 +71,8 @@ public class ReservationController(ReservationRepo reservationRepo, LegsRepo leg
     [HttpGet("api/reservations")]
     public async Task<IActionResult> GetReservations()
     {
-        var reservations = await reservationRepo.GetAllAsync();
+        var userId = _userManager.GetUserId(User);
+        var reservations = await _reservationRepo.GetAllAsync(userId);
 
         return Ok(reservations.Select(r => r.ToDto()).ToList());
     }

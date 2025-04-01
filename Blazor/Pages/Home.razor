@@ -1,9 +1,13 @@
 ﻿@page "/"
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorage
+@using Blazored.LocalStorage
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using Shared
+@using System.Net.Http.Headers
+@using System.ComponentModel.DataAnnotations
 
 <div @onclick="HandleClickOutside">
     @if (!firstSearchSubmitted)
@@ -154,23 +158,24 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Enter Reservation Details</h5>
-                        <button type="button" class="close" @onclick="CloseReservationPopup">
-                            <span>&times;</span>
-                        </button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label>First Name:</label>
-                            <input type="text" class="form-control" @bind="firstName" />
-                        </div>
-                        <div class="form-group">
-                            <label>Last Name:</label>
-                            <input type="text" class="form-control" @bind="lastName" />
-                        </div>
+                        <EditForm Model="reservationModel" OnValidSubmit="HandleReservationSubmit">
+                            <DataAnnotationsValidator/>
+                            <ValidationSummary />
+                            <div class=" form-group">
+                                <label for="firstName">First Name:</label>
+                                <InputText id="firstName" @bind-Value="reservationModel.FirstName" class="form-control" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name:</label>
+                                <InputText id="lastName" @bind-Value="reservationModel.LastName" class="form-control" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary submit-button">Submit</button>
+                        </EditForm>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" @onclick="CloseReservationPopup">Cancel</button>
-                        <button type="button" class="btn btn-primary" @onclick="() => MakeReservation(selectedRoute)">Submit Reservation</button>
                     </div>
                 </div>
             </div>
@@ -184,31 +189,52 @@
     private List<SpaceCompany> selectedCompanies = Enum.GetValues(typeof(SpaceCompany)).Cast<SpaceCompany>().ToList();
     private List<RouteDto> Routes = [];
     private string sortBy = "price";
-    private string firstName = string.Empty;
-    private string lastName = string.Empty;
     private bool showReservationPopup = false;
     private RouteDto? selectedRoute;
     private bool showCompanyDropdown = false;
     private bool firstSearchSubmitted = false;
+    private ReservationModel reservationModel = new ReservationModel();
 
-    private void OpenReservationPopup(RouteDto route)
+    private async Task OpenReservationPopup(RouteDto route)
     {
+        var accessToken = await LocalStorage.GetItemAsync<string>("accessToken");
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
         selectedRoute = route;
         showReservationPopup = true;
     }
 
     private void CloseReservationPopup() => showReservationPopup = false;
-    
+
+    private async Task HandleReservationSubmit()
+    {
+        if (selectedRoute is not null)
+        {
+            await MakeReservation(selectedRoute);
+        }
+    }
+
     private async Task MakeReservation(RouteDto route)
     {
         var reservationRequest = new ReservationRequest
         {
-            FirstName = firstName,
-            LastName = lastName,
+            FirstName = reservationModel.FirstName,
+            LastName = reservationModel.LastName,
             Legs = route.Legs,
             TotalQuotedPrice = route.TotalPrice,
             TransportationCompanyNames = route.Companies
         };
+
+        var accessToken = await LocalStorage.GetItemAsync<string>("accessToken");
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
 
         var response = await Http.PostAsJsonAsync("api/reservations", reservationRequest);
 
@@ -220,8 +246,14 @@
                 NavigationManager.NavigateTo("/reservations");
             }
         }
+        else 
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+
         CloseReservationPopup();
     }
+
     private async Task FindRoutes()
     {
         var queryParams = new Dictionary<string, string>
@@ -293,4 +325,13 @@
     private void ToggleCompanyDropdown() => showCompanyDropdown = !showCompanyDropdown;
 
     private void HandleClickOutside(MouseEventArgs e) => showCompanyDropdown = false;
+
+    public class ReservationModel
+    {
+        [Required]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        public string LastName { get; set; } = string.Empty;
+    }
 }
