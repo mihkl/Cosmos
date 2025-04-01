@@ -5,9 +5,8 @@ Live site: https://delightful-tree-06b279703-preview.westeurope.6.azurestaticapp
 
 * **C# (.NET):** The primary programming language and framework.
 * **ASP.NET Core:** For building the Web API.
-* **POSTGRESQL:** Database for live app.
-*  **SQLLite:** Database for local development.
-* **Supabase PostgreSQL:** The database backend.
+*  **SQLite:** Database for local development.
+* **Supabase PostgreSQL:** Database for live app.
 * **Blazor WebAssembly:** For the frontend.
 *  **Quartz:** For the background job.
 
