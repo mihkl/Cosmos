@@ -51,4 +51,3 @@ Live site: https://delightful-tree-06b279703-preview.westeurope.6.azurestaticapp
     * The Blazor app will start running, and you can access it at `http://localhost:5001`.
 7. Navigate to `http://localhost:5001` to use the web app.
 
-## Deployment (Azure App Service - General Info)
