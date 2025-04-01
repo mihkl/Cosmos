@@ -15,8 +15,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-string? postgreSQLConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
-string? sqliteConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+string? postgreSQLConnectionString = Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection"); //POSTGRESQL for live
 
 if (!string.IsNullOrWhiteSpace(postgreSQLConnectionString))
 {
@@ -26,7 +25,7 @@ if (!string.IsNullOrWhiteSpace(postgreSQLConnectionString))
 else
 {
     builder.Services.AddDbContext<DataContext>(options =>
-        options.UseSqlite(sqliteConnectionString));
+        options.UseSqlite("Data Source=localdatabase.db;")); //SQLite for local
 }
 
 builder.Services.AddScoped<PriceListRepo>()
