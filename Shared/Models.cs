@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
 
 namespace Shared;
@@ -8,6 +8,7 @@ public class PriceList
 {
     [JsonProperty("id")]
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
 
     [JsonProperty("validUntil")]
@@ -22,6 +23,7 @@ public class Leg
 {
     [JsonProperty("id")]
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
 
     [JsonProperty("routeInfo")]
@@ -35,6 +37,7 @@ public class RouteInfo
 {
     [JsonProperty("id")]
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
 
     [JsonProperty("from")]
@@ -51,6 +54,7 @@ public class Location
 {
     [JsonProperty("id")]
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
 
     [JsonProperty("name")]
@@ -62,6 +66,7 @@ public class Provider
 
     [JsonProperty("id")]
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
 
     [JsonProperty("company")]
@@ -81,6 +86,7 @@ public class Company
 {
     [JsonProperty("id")]
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
 
     [JsonProperty("name")]
@@ -99,6 +105,7 @@ public class ReservationRequest
 public class ReservationLeg
 {
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
     public required Provider Provider { get; set; }
     public required Leg Leg { get; set; }
@@ -106,7 +113,9 @@ public class ReservationLeg
 public class Reservation
 {
     [Key]
+    [Column(TypeName = "uuid")]
     public required Guid Id { get; set; }
+    [Column(TypeName = "uuid")]
     public required Guid PriceListId { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }

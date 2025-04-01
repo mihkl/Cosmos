@@ -48,7 +48,7 @@ public class ReservationController(ReservationRepo reservationRepo, LegsRepo leg
                 })],
             TotalQuotedPrice = request.TotalQuotedPrice,
             TransportationCompanyNames = request.TransportationCompanyNames,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
         };
 
         await reservationRepo.AddAsync(reservation);

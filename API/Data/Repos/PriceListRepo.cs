@@ -25,8 +25,7 @@ public class PriceListRepo(DataContext dataContext)
 
         if (mostRecentPriceList is null || mostRecentPriceList.ValidUntil < DateTime.UtcNow)
         {
-            mostRecentPriceList = await PriceListService.FetchNewPriceListFromApiAsync();
-            await AddAsync(mostRecentPriceList);
+            mostRecentPriceList = await PriceListFetchService.FetchNewPriceListFromApiAsync();
         }
         return mostRecentPriceList;
     }
@@ -87,5 +86,17 @@ public class PriceListRepo(DataContext dataContext)
         _dataContext.PriceList.Add(priceList);
 
         await _dataContext.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsActivePriceListValidAsync()
+    {
+        var activePriceList = await _dataContext.PriceList
+            .OrderByDescending(p => p.ValidUntil)
+            .FirstOrDefaultAsync() ?? null;
+        if (activePriceList is null)
+        {
+            return false;
+        }
+        return activePriceList.ValidUntil > DateTime.UtcNow;
     }
 }

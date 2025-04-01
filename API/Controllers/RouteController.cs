@@ -13,7 +13,6 @@ namespace API.Controllers
         [HttpGet("api/routes")]
         public async Task<IActionResult> GetRoutes([FromQuery] Planet from, [FromQuery] Planet to, [FromQuery] SpaceCompany[] companies)
         {
-
             var priceList = await _priceListRepo.GetActivePriceListAsync();
             var legs = priceList.Legs.ToList();
             var routes = RouteFinder.FindRoutes(from, to, legs, 5);
