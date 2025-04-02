@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Shared;
 
-public class PriceList
+public record PriceList
 {
     [JsonProperty("id")]
     [Key]
@@ -19,7 +19,7 @@ public class PriceList
     public List<Reservation> Reservations { get; set; } = [];
 }
 
-public class Leg
+public record Leg
 {
     [JsonProperty("id")]
     [Key]
@@ -33,7 +33,7 @@ public class Leg
     public required List<Provider> Providers { get; set; }
 }
 
-public class RouteInfo
+public record RouteInfo
 {
     [JsonProperty("id")]
     [Key]
@@ -50,7 +50,7 @@ public class RouteInfo
     public required long Distance { get; set; }
 }
 
-public class Location
+public record Location
 {
     [JsonProperty("id")]
     [Key]
@@ -61,7 +61,7 @@ public class Location
     public required string Name { get; set; }
 }
 
-public class Provider
+public record Provider
 {
 
     [JsonProperty("id")]
@@ -82,7 +82,7 @@ public class Provider
     public required DateTime FlightEnd { get; set; }
 }
 
-public class Company
+public record Company
 {
     [JsonProperty("id")]
     [Key]
@@ -93,7 +93,7 @@ public class Company
     public required SpaceCompany Name { get; set; }
 }
 
-public class ReservationRequest
+public record ReservationRequest
 {
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
@@ -102,7 +102,7 @@ public class ReservationRequest
     public required List<string> TransportationCompanyNames { get; set; }
 }
 
-public class ReservationLeg
+public record ReservationLeg
 {
     [Key]
     [Column(TypeName = "uuid")]
@@ -110,7 +110,7 @@ public class ReservationLeg
     public required Provider Provider { get; set; }
     public required Leg Leg { get; set; }
 }
-public class Reservation
+public record Reservation
 {
     [Key]
     [Column(TypeName = "uuid")]

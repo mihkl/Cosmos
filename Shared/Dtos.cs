@@ -1,6 +1,6 @@
 namespace Shared;
 
-public class RouteDto
+public record RouteDto
 {
     public required List<LegDto> Legs { get; set; }
     public required double TotalPrice { get; set; }
@@ -8,14 +8,14 @@ public class RouteDto
     public required List<string> Companies { get; set; }
 }
 
-public class LegDto
+public record LegDto
 {
     public required Guid Id { get; set; }
     public required RouteInfoDto RouteInfo { get; set; }
     public required ProviderDto Provider { get; set; }
 }
 
-public class RouteInfoDto
+public record RouteInfoDto
 {
     public required Guid Id { get; set; }
     public required LocationDto From { get; set; }
@@ -23,13 +23,13 @@ public class RouteInfoDto
     public required long Distance { get; set; }
 }
 
-public class LocationDto
+public record LocationDto
 {
     public required Guid Id { get; set; }
     public required string Name { get; set; }
 }
 
-public class ProviderDto
+public record ProviderDto
 {
     public required Guid Id { get; set; }
     public required CompanyDto Company { get; set; }
@@ -38,13 +38,13 @@ public class ProviderDto
     public required DateTime FlightEnd { get; set; }
 }
 
-public class CompanyDto
+public record CompanyDto
 {
     public required Guid Id { get; set; }
     public required string Name { get; set; }
 }
 
-public class ReservationDto
+public record ReservationDto
 {
     public required Guid Id { get; set; }
     public required string FirstName { get; set; }
@@ -55,7 +55,7 @@ public class ReservationDto
     public required DateTime CreatedAt { get; set; }
 }
 
-public class ReservationLegDto
+public record ReservationLegDto
 {
     public required Guid Id { get; set; }
     public required RouteInfoDto RouteInfo { get; set; }
