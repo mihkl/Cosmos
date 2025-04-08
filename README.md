@@ -1,5 +1,6 @@
 # Cosmos Odyssey
 Live site: https://delightful-tree-06b279703-preview.westeurope.6.azurestaticapps.net/
+Might take a bit for the server to start up as it is free tier and goes to sleep after some time.
 
 ## Technologies Used
 
